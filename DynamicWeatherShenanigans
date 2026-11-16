@@ -1,0 +1,91 @@
+
+--[[
+    Ninja Shenanigans | Dynamic Weather System
+    Open-source Roblox Luau example
+
+    Place in ServerScriptService.
+    Weather changes automatically across the server.
+]]
+
+local Lighting = game:GetService("Lighting")
+local ReplicatedStorage = game:GetService("ReplicatedStorage")
+
+local CHANGE_INTERVAL = 180
+
+local weatherState = ReplicatedStorage:FindFirstChild("WeatherState")
+
+if not weatherState then
+    weatherState = Instance.new("StringValue")
+    weatherState.Name = "WeatherState"
+    weatherState.Parent = ReplicatedStorage
+end
+
+local weatherTypes = {
+    {
+        Name = "Clear",
+        Brightness = 2,
+        FogEnd = 100000,
+        ClockTime = 14,
+        AtmosphereDensity = 0.25
+    },
+    {
+        Name = "Rain",
+        Brightness = 1,
+        FogEnd = 700,
+        ClockTime = 12,
+        AtmosphereDensity = 0.5
+    },
+    {
+        Name = "Fog",
+        Brightness = 0.7,
+        FogEnd = 180,
+        ClockTime = 8,
+        AtmosphereDensity = 0.7
+    },
+    {
+        Name = "Snow",
+        Brightness = 1.4,
+        FogEnd = 450,
+        ClockTime = 10,
+        AtmosphereDensity = 0.45
+    }
+}
+
+local atmosphere = Lighting:FindFirstChildOfClass("Atmosphere")
+
+if not atmosphere then
+    atmosphere = Instance.new("Atmosphere")
+    atmosphere.Parent = Lighting
+end
+
+local function applyWeather(weather)
+    weatherState.Value = weather.Name
+
+    Lighting.Brightness = weather.Brightness
+    Lighting.FogEnd = weather.FogEnd
+    Lighting.ClockTime = weather.ClockTime
+
+    atmosphere.Density = weather.AtmosphereDensity
+
+    print("[Ninja Shenanigans] Weather: " .. weather.Name)
+end
+
+local rng = Random.new()
+local previousWeather = nil
+
+while true do
+    local available = {}
+
+    for _, weather in ipairs(weatherTypes) do
+        if weather.Name ~= previousWeather then
+            table.insert(available, weather)
+        end
+    end
+
+    local selected = available[rng:NextInteger(1, #available)]
+
+    applyWeather(selected)
+    previousWeather = selected.Name
+
+    task.wait(CHANGE_INTERVAL)
+end
